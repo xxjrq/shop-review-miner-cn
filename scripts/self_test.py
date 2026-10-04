@@ -33,6 +33,18 @@ for value in ("display_name:", "short_description:", "default_prompt:", "icon_sm
     if value not in agent: errors.append(f"agents/openai.yaml missing {value}")
 short = re.search(r'^  short_description: "(.+)"$', agent, re.M)
 if not short or not 25 <= len(short.group(1)) <= 64: errors.append("short_description must be 25–64 characters")
+for field in ("display_name", "short_description", "default_prompt", "icon_small", "icon_large"):
+    found = re.search(r'^  ' + field + r': "([^"\n]+)"$', agent, re.M)
+    if not found:
+        errors.append(f"agent field must be quoted: {field}")
+        continue
+    value = found.group(1)
+    if field == "default_prompt" and "$shop-review-miner-cn" not in value:
+        errors.append("default_prompt must reference this Skill")
+    if field.startswith("icon_"):
+        target = (ROOT / value).resolve()
+        if not target.is_relative_to(ROOT.resolve()) or not target.is_file():
+            errors.append("agent icon must exist inside Skill directory")
 for value in (
     "商品/作品名称、品类和每条评价原文（均必需）",
     "任一项缺失时，逐项列出缺少字段、对分析的影响与补充方式，停止分析",
